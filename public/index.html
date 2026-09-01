@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Vinted · Hub de órdenes</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+           margin: 0; min-height: 100vh; display: grid; place-items: center;
+           background: #0f1115; color: #e8ebf0; }
+    .caja { max-width: 560px; padding: 32px 28px; margin: 20px;
+            background: #171a21; border: 1px solid #262b36; border-radius: 14px; }
+    h1 { font-size: 20px; margin: 0 0 4px; }
+    .sub { color: #9aa3b2; font-size: 14px; margin: 0 0 20px; }
+    p { line-height: 1.55; color: #c7cdd8; font-size: 14px; }
+    code { background: #0f1115; border: 1px solid #262b36; border-radius: 5px;
+           padding: 1px 5px; font-size: 13px; }
+    label { display: block; font-size: 12px; color: #9aa3b2; margin: 14px 0 4px; }
+    input { width: 100%; box-sizing: border-box; padding: 9px 11px; border-radius: 8px;
+            border: 1px solid #2a2f3a; background: #0f1115; color: inherit; font-size: 14px; }
+    button { margin-top: 12px; padding: 9px 16px; border-radius: 8px; border: 0;
+             background: #3b82f6; color: #fff; font-size: 14px; cursor: pointer; }
+    .estado { margin-top: 12px; font-size: 14px; min-height: 20px; }
+    .ok { color: #34d399; } .no { color: #f87171; }
+    .pie { margin-top: 22px; font-size: 12px; color: #6b7280; }
+  </style>
+</head>
+<body>
+  <div class="caja">
+    <h1>🛰️ Vinted · Hub de órdenes</h1>
+    <p class="sub">El puente entre tus dos PC está en marcha.</p>
+    <p>
+      Esta web recibe las <strong>órdenes de publicación</strong> del PC director y se las
+      entrega al PC de 24&nbsp;h. Las peticiones van protegidas por un <strong>token</strong>;
+      no hay nada que hacer aquí a mano. Configura la misma URL y el mismo token en el panel de
+      los dos PC (Ajustes → <em>Hub de órdenes</em>).
+    </p>
+    <label for="tok">¿Comprobar el token? (solo se usa en tu navegador, no se guarda)</label>
+    <input id="tok" type="password" placeholder="pega el token del hub" autocomplete="off">
+    <button onclick="probar()">Probar conexión</button>
+    <div class="estado" id="estado"></div>
+    <div class="pie">Si ves esta página, el despliegue funcionó. La API vive en <code>/api/…</code>.</div>
+  </div>
+  <script>
+    async function probar() {
+      const est = document.getElementById('estado');
+      const tok = document.getElementById('tok').value.trim();
+      if (!tok) { est.textContent = 'Escribe el token primero.'; est.className = 'estado no'; return; }
+      est.textContent = 'Comprobando…'; est.className = 'estado';
+      try {
+        const r = await fetch('/api/health', { headers: { 'x-hub-token': tok } });
+        const d = await r.json();
+        if (r.ok && d.ok) { est.textContent = '✅ Token correcto y base de datos lista.'; est.className = 'estado ok'; }
+        else if (r.status === 401) { est.textContent = '❌ El token no coincide.'; est.className = 'estado no'; }
+        else { est.textContent = '⚠️ ' + (d.error || ('error ' + r.status)); est.className = 'estado no'; }
+      } catch (e) {
+        est.textContent = '❌ No se pudo contactar con la API.'; est.className = 'estado no';
+      }
+    }
+  </script>
+</body>
+</html>
