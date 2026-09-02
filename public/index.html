@@ -469,6 +469,14 @@ async function refrescar(){
   if(!TOKEN||$('#app').classList.contains('oculto')) return;
   try{ await cargar(); if(TAB!=='config'&&TAB!=='programar') render(); else { pintarMini(); } }catch(e){}
 }
+// Magic-link: entrar con #t=TOKEN en la URL (lo genera el botón "Entrar directo"
+// y el QR del panel local). El fragmento #... NO viaja al servidor; se limpia al
+// instante para que no quede el token en la barra ni en el historial.
+(function(){
+  const m = (location.hash||'').match(/[#&]t=([^&]+)/);
+  if(m){ try{ TOKEN=decodeURIComponent(m[1]); localStorage.setItem('hub_token',TOKEN); }catch(e){}
+    try{ history.replaceState(null,'',location.pathname+location.search); }catch(e){} }
+})();
 setInterval(refrescar, 12000);
 if(TOKEN) arrancar();
 </script>
