@@ -32,6 +32,15 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'GET') {
+      // La WEB pide TODAS las ordenes (programadas + historial) para mostrarlas.
+      if (req.query && (req.query.all === '1' || req.query.all === 'true')) {
+        const rows = await sql`
+          SELECT orden_uid, origen_pc, origen_nombre, destino_pc, destino_profile_id,
+                 producto_uid, programada_en, max_intentos, estado, creada_en, aplicada_en
+          FROM ordenes ORDER BY creada_en DESC LIMIT 500
+        `;
+        return res.status(200).json({ ok: true, ordenes: rows });
+      }
       const raw = String((req.query && req.query.profiles) || '').trim();
       if (!raw) return res.status(200).json({ ok: true, ordenes: [] });
       const perfiles = new Set(raw.split(',').map((s) => s.trim()).filter(Boolean));
@@ -51,6 +60,14 @@ export default async function handler(req, res) {
         .filter((o) => perfiles.has(String(o.destino_profile_id)))
         .slice(0, 200);
       return res.status(200).json({ ok: true, ordenes });
+    }
+
+    if (req.method === 'DELETE') {
+      // La WEB cancela una orden aún pendiente (des-programar).
+      const uid = String((req.query && req.query.orden_uid) || (req.body && req.body.orden_uid) || '').trim();
+      if (!uid) return res.status(400).json({ ok: false, error: 'falta orden_uid' });
+      await sql`DELETE FROM ordenes WHERE orden_uid = ${uid} AND estado = 'pendiente'`;
+      return res.status(200).json({ ok: true, orden_uid: uid });
     }
 
     res.status(405).json({ ok: false, error: 'metodo no permitido' });

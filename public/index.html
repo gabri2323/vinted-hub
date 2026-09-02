@@ -1,64 +1,476 @@
 <!doctype html>
 <html lang="es">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="robots" content="noindex,nofollow">
-  <title>Vinted · Hub de órdenes</title>
-  <style>
-    :root { color-scheme: light dark; }
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-           margin: 0; min-height: 100vh; display: grid; place-items: center;
-           background: #0f1115; color: #e8ebf0; }
-    .caja { max-width: 560px; padding: 32px 28px; margin: 20px;
-            background: #171a21; border: 1px solid #262b36; border-radius: 14px; }
-    h1 { font-size: 20px; margin: 0 0 4px; }
-    .sub { color: #9aa3b2; font-size: 14px; margin: 0 0 20px; }
-    p { line-height: 1.55; color: #c7cdd8; font-size: 14px; }
-    code { background: #0f1115; border: 1px solid #262b36; border-radius: 5px;
-           padding: 1px 5px; font-size: 13px; }
-    label { display: block; font-size: 12px; color: #9aa3b2; margin: 14px 0 4px; }
-    input { width: 100%; box-sizing: border-box; padding: 9px 11px; border-radius: 8px;
-            border: 1px solid #2a2f3a; background: #0f1115; color: inherit; font-size: 14px; }
-    button { margin-top: 12px; padding: 9px 16px; border-radius: 8px; border: 0;
-             background: #3b82f6; color: #fff; font-size: 14px; cursor: pointer; }
-    .estado { margin-top: 12px; font-size: 14px; min-height: 20px; }
-    .ok { color: #34d399; } .no { color: #f87171; }
-    .pie { margin-top: 22px; font-size: 12px; color: #6b7280; }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Vinted · Centro de control</title>
+<style>
+  :root{
+    --bg:#0e1014; --bg2:#151922; --bg3:#1b212c; --linea:#262d3a;
+    --txt:#e7ecf3; --tenue:#9aa5b6; --debil:#6b7688;
+    --acc:#2dd4bf; --acc2:#22b8a6; --azul:#5b9dff;
+    --vivo:#f0616a; --ok:#34d399; --warn:#f2b544; --mal:#f0616a;
+    --sombra:0 2px 14px rgba(0,0,0,.35);
+    color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--txt);font-size:14px;line-height:1.5}
+  a{color:var(--acc)}
+  h1,h2,h3{margin:0}
+  button{font-family:inherit;cursor:pointer}
+  input,select{font-family:inherit}
+  .oculto{display:none!important}
+
+  /* -------- login -------- */
+  #login{min-height:100vh;display:grid;place-items:center;padding:20px}
+  .caja{width:100%;max-width:420px;background:var(--bg2);border:1px solid var(--linea);border-radius:16px;padding:30px 26px;box-shadow:var(--sombra)}
+  .caja h1{font-size:20px;margin-bottom:6px}
+  .caja p{color:var(--tenue);margin:0 0 18px}
+  .caja label{display:block;font-size:12px;color:var(--tenue);margin:0 0 6px}
+  .caja input{width:100%;padding:11px 12px;border-radius:10px;border:1px solid var(--linea);background:var(--bg);color:inherit;font-size:15px}
+  .caja button{width:100%;margin-top:14px;padding:11px;border-radius:10px;border:0;background:var(--acc);color:#04211d;font-weight:600;font-size:15px}
+  #login .msg{margin-top:12px;font-size:13px;min-height:18px}
+
+  /* -------- shell -------- */
+  header{position:sticky;top:0;z-index:20;background:rgba(14,16,20,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--linea)}
+  .barra{display:flex;align-items:center;gap:14px;padding:11px 16px;max-width:1180px;margin:0 auto;flex-wrap:wrap}
+  .marca{display:flex;align-items:center;gap:9px;font-weight:600;letter-spacing:.2px}
+  .marca .pt{width:11px;height:11px;border-radius:3px;background:var(--acc);box-shadow:0 0 10px var(--acc)}
+  .marca small{display:block;color:var(--debil);font-weight:400;font-size:11px;letter-spacing:0}
+  .pcs-mini{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto}
+  .pcpill{display:flex;align-items:center;gap:7px;background:var(--bg2);border:1px solid var(--linea);border-radius:20px;padding:5px 11px;font-size:12.5px}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--debil)}
+  .dot.on{background:var(--ok);box-shadow:0 0 8px var(--ok)}
+  .btn-salir{background:transparent;border:1px solid var(--linea);color:var(--tenue);border-radius:9px;padding:6px 11px;font-size:12.5px}
+  nav{display:flex;gap:3px;padding:0 12px;max-width:1180px;margin:0 auto;overflow-x:auto}
+  nav button{background:transparent;border:0;color:var(--tenue);padding:12px 14px;font-size:14px;border-bottom:2px solid transparent;white-space:nowrap}
+  nav button.act{color:var(--txt);border-bottom-color:var(--acc)}
+  main{max-width:1180px;margin:0 auto;padding:20px 16px 60px}
+
+  .tarjeta{background:var(--bg2);border:1px solid var(--linea);border-radius:14px;padding:16px 18px;box-shadow:var(--sombra)}
+  .grid{display:grid;gap:14px}
+  .g-pc{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
+  .titulo-sec{display:flex;align-items:center;gap:10px;margin:0 0 14px}
+  .titulo-sec h2{font-size:16px}
+  .titulo-sec .cuenta{color:var(--debil);font-size:12.5px}
+  .btn{background:var(--acc);color:#04211d;border:0;border-radius:9px;padding:9px 14px;font-weight:600;font-size:13.5px}
+  .btn.sec{background:var(--bg3);color:var(--txt);border:1px solid var(--linea);font-weight:500}
+  .btn.mini{padding:6px 10px;font-size:12.5px}
+  .btn.peligro{background:transparent;border:1px solid var(--mal);color:var(--mal)}
+  .pill{display:inline-flex;align-items:center;gap:6px;border-radius:20px;padding:3px 10px;font-size:12px;border:1px solid var(--linea);background:var(--bg3)}
+  .pill.vivo{color:var(--vivo);border-color:rgba(240,97,106,.4)}
+  .pill.seguro{color:var(--acc);border-color:rgba(45,212,191,.4)}
+  .pill.ok{color:var(--ok)} .pill.warn{color:var(--warn)} .pill.mal{color:var(--mal)}
+  .kv{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-top:1px solid var(--linea);font-size:13.5px}
+  .kv:first-of-type{border-top:0}
+  .kv .k{color:var(--tenue)}
+  .num{font-variant-numeric:tabular-nums}
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--linea);vertical-align:middle}
+  th{color:var(--tenue);font-weight:500;font-size:12px;text-transform:uppercase;letter-spacing:.4px}
+  .scroll{overflow-x:auto}
+  .vacio{color:var(--debil);text-align:center;padding:30px 10px}
+  .campo{margin:0 0 2px}
+  .campo label{display:block;font-size:12.5px;color:var(--tenue);margin:10px 0 4px}
+  .campo input,.campo select{width:100%;padding:9px 10px;border-radius:9px;border:1px solid var(--linea);background:var(--bg);color:inherit;font-size:14px}
+  .chk{display:flex;align-items:center;gap:9px;margin:9px 0;font-size:13.5px}
+  .chk input{width:17px;height:17px;accent-color:var(--acc)}
+  .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:2px 20px}
+  .aviso{background:var(--bg3);border:1px solid var(--linea);border-left:3px solid var(--acc);border-radius:9px;padding:10px 12px;color:var(--tenue);font-size:13px;margin-bottom:14px}
+  .st{font-size:12.5px;min-height:16px}
+  .log{font-family:ui-monospace,Consolas,monospace;font-size:12.5px;line-height:1.7}
+  .log .ln{display:flex;gap:10px;padding:2px 0;border-top:1px solid rgba(38,45,58,.5)}
+  .log .t{color:var(--debil);white-space:nowrap}
+  .lv-success{color:var(--ok)} .lv-error{color:var(--mal)} .lv-warn{color:var(--warn)} .lv-attention{color:var(--warn)}
+  .selpc{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+  .selpc select{padding:9px 12px;border-radius:10px;border:1px solid var(--linea);background:var(--bg2);color:inherit;font-size:14px;min-width:220px}
+  @media(max-width:560px){ .barra{gap:8px} main{padding:14px 11px 50px} }
+</style>
 </head>
 <body>
+
+<!-- LOGIN -->
+<div id="login">
   <div class="caja">
-    <h1>🛰️ Vinted · Hub de órdenes</h1>
-    <p class="sub">El puente entre tus dos PC está en marcha.</p>
-    <p>
-      Esta web recibe las <strong>órdenes de publicación</strong> del PC director y se las
-      entrega al PC de 24&nbsp;h. Las peticiones van protegidas por un <strong>token</strong>;
-      no hay nada que hacer aquí a mano. Configura la misma URL y el mismo token en el panel de
-      los dos PC (Ajustes → <em>Hub de órdenes</em>).
-    </p>
-    <label for="tok">¿Comprobar el token? (solo se usa en tu navegador, no se guarda)</label>
-    <input id="tok" type="password" placeholder="pega el token del hub" autocomplete="off">
-    <button onclick="probar()">Probar conexión</button>
-    <div class="estado" id="estado"></div>
-    <div class="pie">Si ves esta página, el despliegue funcionó. La API vive en <code>/api/…</code>.</div>
+    <h1>🛰️ Centro de control</h1>
+    <p>Una sola web para tus dos PC. Entra con el <strong>token del hub</strong> (el mismo de Vercel).</p>
+    <label for="tok">Token</label>
+    <input id="tok" type="password" placeholder="pega aquí el token" autocomplete="off" onkeydown="if(event.key==='Enter')entrar()">
+    <button onclick="entrar()">Entrar</button>
+    <div class="msg" id="loginMsg"></div>
   </div>
-  <script>
-    async function probar() {
-      const est = document.getElementById('estado');
-      const tok = document.getElementById('tok').value.trim();
-      if (!tok) { est.textContent = 'Escribe el token primero.'; est.className = 'estado no'; return; }
-      est.textContent = 'Comprobando…'; est.className = 'estado';
-      try {
-        const r = await fetch('/api/health', { headers: { 'x-hub-token': tok } });
-        const d = await r.json();
-        if (r.ok && d.ok) { est.textContent = '✅ Token correcto y base de datos lista.'; est.className = 'estado ok'; }
-        else if (r.status === 401) { est.textContent = '❌ El token no coincide.'; est.className = 'estado no'; }
-        else { est.textContent = '⚠️ ' + (d.error || ('error ' + r.status)); est.className = 'estado no'; }
-      } catch (e) {
-        est.textContent = '❌ No se pudo contactar con la API.'; est.className = 'estado no';
-      }
-    }
-  </script>
+</div>
+
+<!-- APP -->
+<div id="app" class="oculto">
+  <header>
+    <div class="barra">
+      <div class="marca"><span class="pt"></span><div>Vinted · Centro de control<small>una web · dos PC</small></div></div>
+      <div class="pcs-mini" id="pcsMini"></div>
+      <button class="btn-salir" onclick="salir()">Salir</button>
+    </div>
+    <nav id="nav"></nav>
+  </header>
+  <main id="main"></main>
+</div>
+
+<script>
+"use strict";
+const $ = (s,e=document)=>e.querySelector(s);
+const H = (s)=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let TOKEN = localStorage.getItem('hub_token') || '';
+let TAB = localStorage.getItem('hub_tab') || 'panel';
+const STATE = { estado:[], stations:[], config:[], catalogo:[], orders:[], stats:[], inbox:[], secretos:[] };
+
+const TABS = [
+  ['panel','Panel'],['cuentas','Cuentas'],['programar','Programar'],
+  ['config','Configuración'],['actividad','Actividad'],['stats','Estadísticas'],['mensajes','Mensajes']
+];
+
+/* ---------- API ---------- */
+async function api(path, opts={}){
+  const r = await fetch(path, Object.assign({}, opts, {
+    headers: Object.assign({'x-hub-token':TOKEN,'content-type':'application/json'}, opts.headers||{})
+  }));
+  if(r.status===401){ salir(); throw new Error('401'); }
+  const d = await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(d.error||('error '+r.status));
+  return d;
+}
+async function entrar(){
+  const tok = $('#tok').value.trim();
+  const m = $('#loginMsg');
+  if(!tok){ m.textContent='Escribe el token.'; m.style.color='var(--mal)'; return; }
+  m.textContent='Comprobando…'; m.style.color='var(--tenue)';
+  try{
+    const r = await fetch('/api/health',{headers:{'x-hub-token':tok}});
+    const d = await r.json();
+    if(r.ok && d.ok){ TOKEN=tok; localStorage.setItem('hub_token',tok); arrancar(); }
+    else if(r.status===401){ m.textContent='❌ El token no coincide.'; m.style.color='var(--mal)'; }
+    else { m.textContent='⚠️ '+(d.error||('error '+r.status)); m.style.color='var(--warn)'; }
+  }catch(e){ m.textContent='❌ No se pudo contactar con la web.'; m.style.color='var(--mal)'; }
+}
+function salir(){ localStorage.removeItem('hub_token'); TOKEN=''; $('#app').classList.add('oculto'); $('#login').classList.remove('oculto'); }
+
+/* ---------- carga de datos ---------- */
+async function cargar(){
+  const g = (tipo)=>api('/api/store?tipo='+tipo).then(d=>d.items||[]).catch(()=>[]);
+  const [est,sta,cfg,cat,ord,stt,inb,sec] = await Promise.all([
+    g('estado'),
+    api('/api/stations').then(d=>d.pcs||[]).catch(()=>[]),
+    api('/api/config').then(d=>d.pcs||[]).catch(()=>[]),
+    g('catalogo'),
+    api('/api/orders?all=1').then(d=>d.ordenes||[]).catch(()=>[]),
+    g('stats'), g('inbox'), g('secretos')
+  ]);
+  STATE.estado=est; STATE.stations=sta; STATE.config=cfg; STATE.catalogo=cat;
+  STATE.orders=ord; STATE.stats=stt; STATE.inbox=inb; STATE.secretos=sec;
+}
+
+/* ---------- helpers de modelo ---------- */
+function edadSeg(ts){ if(!ts) return 1e9; return (Date.now()-new Date(ts).getTime())/1000; }
+function pcs(){
+  const m = new Map();
+  const add=(id,nombre)=>{ if(!id) return; if(!m.has(id)) m.set(id,{pc_id:id,pc_nombre:nombre||id}); else if(nombre && m.get(id).pc_nombre===id) m.get(id).pc_nombre=nombre; };
+  STATE.stations.forEach(p=>add(p.pc_id,p.pc_nombre));
+  STATE.estado.forEach(p=>add(p.pc_id,(p.data&&p.data.pc_nombre)||p.pc_id));
+  STATE.config.forEach(p=>add(p.pc_id,p.pc_id));
+  return [...m.values()].map(pc=>{
+    const est = STATE.estado.find(e=>e.pc_id===pc.pc_id);
+    const sta = STATE.stations.find(e=>e.pc_id===pc.pc_id);
+    const cfg = STATE.config.find(e=>e.pc_id===pc.pc_id);
+    const online = est ? edadSeg(est.updated_at)<90 : false;
+    return {...pc, est:est?est.data:null, est_ts:est?est.updated_at:null, online,
+            cuentas: sta?(sta.estaciones||[]):[], settings: cfg?(cfg.data&&cfg.data.settings||cfg.data||{}):{}};
+  }).sort((a,b)=>a.pc_nombre.localeCompare(b.pc_nombre));
+}
+function cuentasDe(pcId){ const p=STATE.stations.find(e=>e.pc_id===pcId); return p?(p.estaciones||[]):[]; }
+function catalogoDe(pcId){ const p=STATE.catalogo.find(e=>e.pc_id===pcId); return p?(Array.isArray(p.data)?p.data:[]):[]; }
+
+/* ---------- render shell ---------- */
+function pintarMini(){
+  const L=pcs();
+  $('#pcsMini').innerHTML = L.length? L.map(p=>{
+    const modo = p.est&&p.est.modo? `<span class="pill ${p.est.modo==='EN VIVO'?'vivo':'seguro'}" style="padding:1px 7px">${H(p.est.modo)}</span>`:'';
+    return `<span class="pcpill"><span class="dot ${p.online?'on':''}"></span>${H(p.pc_nombre)} ${modo}</span>`;
+  }).join('') : '<span class="pcpill"><span class="dot"></span>sin PC conectados</span>';
+}
+function pintarNav(){
+  $('#nav').innerHTML = TABS.map(([id,l])=>`<button class="${id===TAB?'act':''}" onclick="irA('${id}')">${l}</button>`).join('');
+}
+function irA(id){ TAB=id; localStorage.setItem('hub_tab',id); pintarNav(); render(); }
+
+/* ---------- render tabs ---------- */
+function render(){
+  pintarMini(); pintarNav();
+  const m = $('#main');
+  if(TAB==='panel') m.innerHTML=vPanel();
+  else if(TAB==='cuentas') m.innerHTML=vCuentas();
+  else if(TAB==='programar'){ m.innerHTML=vProgramar(); prepProgramar(); }
+  else if(TAB==='config'){ m.innerHTML=vConfig(); prepConfig(); }
+  else if(TAB==='actividad') m.innerHTML=vActividad();
+  else if(TAB==='stats') m.innerHTML=vStats();
+  else if(TAB==='mensajes') m.innerHTML=vMensajes();
+}
+
+function vPanel(){
+  const L=pcs();
+  if(!L.length) return `<div class="tarjeta vacio">Aún no hay PC conectados.<br><small>Arranca el programa en cada PC con el mismo token del hub.</small></div>`;
+  return `<div class="grid g-pc">`+L.map(p=>{
+    const e=p.est||{}; const pub=e.publicaciones||{};
+    const pubTxt=Object.keys(pub).length? Object.entries(pub).map(([k,v])=>`${H(k)}: <b class="num">${v}</b>`).join(' · '):'—';
+    const modo = e.modo? `<span class="pill ${e.modo==='EN VIVO'?'vivo':'seguro'}">${H(e.modo)}</span>`:'';
+    return `<div class="tarjeta">
+      <div class="titulo-sec" style="justify-content:space-between">
+        <h2><span class="dot ${p.online?'on':''}" style="display:inline-block;margin-right:7px"></span>${H(p.pc_nombre)}</h2>
+        ${modo}
+      </div>
+      <div class="kv"><span class="k">Estado</span><span>${p.online?'<span class="pill ok">en línea</span>':'<span class="pill">desconectado</span>'}</span></div>
+      <div class="kv"><span class="k">Motor</span><span>${H(e.motor||'—')}</span></div>
+      <div class="kv"><span class="k">Cuentas activas</span><span class="num">${e.cuentas!=null?e.cuentas:cuentasDe(p.pc_id).length}</span></div>
+      <div class="kv"><span class="k">Publicaciones</span><span>${pubTxt}</span></div>
+      <div class="kv"><span class="k">Perfil abierto</span><span>${e.perfil_abierto?H(e.perfil_abierto):'ninguno'}</span></div>
+      <div class="kv"><span class="k">Últ. señal</span><span>${p.est_ts?H(hace(p.est_ts)):'—'}</span></div>
+    </div>`;
+  }).join('')+`</div>`;
+}
+
+function vCuentas(){
+  const L=pcs();
+  if(!L.length) return `<div class="tarjeta vacio">Sin cuentas todavía.</div>`;
+  return L.map(p=>{
+    const cs=cuentasDe(p.pc_id);
+    const filas = cs.length? cs.map(c=>`<tr>
+        <td>${H(c.nombre||('perfil '+c.profile_id))}</td>
+        <td>${H(c.usuario||'')}</td>
+        <td>${H(c.dominio||'')}</td>
+        <td>${c.activa?'<span class="pill ok">activa</span>':'<span class="pill">inactiva</span>'}</td>
+        <td>${c.calibrada?'<span class="pill ok">sí</span>':'<span class="pill warn">no'+(c.campos?(' '+H(c.campos)):'')+'</span>'}</td>
+        <td class="num" style="color:var(--debil)">${H(c.profile_id)}</td>
+      </tr>`).join('') : `<tr><td colspan="6" class="vacio">sin cuentas</td></tr>`;
+    return `<div class="tarjeta" style="margin-bottom:14px">
+      <div class="titulo-sec"><h2>${H(p.pc_nombre)}</h2><span class="cuenta">${cs.length} cuenta(s)</span>${p.online?'<span class="pill ok">en línea</span>':''}</div>
+      <div class="scroll"><table><thead><tr><th>Cuenta</th><th>Usuario</th><th>Dominio</th><th>Estado</th><th>Calibrada</th><th>Perfil</th></tr></thead><tbody>${filas}</tbody></table></div>
+    </div>`;
+  }).join('');
+}
+
+/* ---------- Programar ---------- */
+function vProgramar(){
+  return `
+  <div class="aviso">Para que el otro PC publique de verdad, el producto (con sus fotos) debe estar en ese PC — llega por OneDrive. Aquí eliges cuenta, producto y hora; el PC dueño lo publica cuando toque.</div>
+  <div class="tarjeta" style="margin-bottom:16px">
+    <div class="titulo-sec"><h2>Nueva publicación programada</h2></div>
+    <div class="cols">
+      <div class="campo"><label>PC / cuenta destino</label><select id="pgPc" onchange="prepProgramar()"></select></div>
+      <div class="campo"><label>Cuenta</label><select id="pgCuenta"></select></div>
+    </div>
+    <div class="cols">
+      <div class="campo"><label>Producto</label><select id="pgProd"></select></div>
+      <div class="campo"><label>Fecha y hora</label><input id="pgFecha" type="datetime-local"></div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;margin-top:14px">
+      <button class="btn" onclick="crearOrden()">Programar publicación</button>
+      <span class="st" id="pgSt"></span>
+    </div>
+  </div>
+  <div class="tarjeta">
+    <div class="titulo-sec"><h2>Órdenes</h2><span class="cuenta">${STATE.orders.length}</span></div>
+    <div class="scroll"><table><thead><tr><th>Cuándo</th><th>Cuenta destino</th><th>Producto</th><th>Estado</th><th>Origen</th><th></th></tr></thead><tbody>${filasOrdenes()}</tbody></table></div>
+  </div>`;
+}
+function nombreCuentaPorPerfil(pcId,pid){ const c=cuentasDe(pcId).find(x=>String(x.profile_id)===String(pid)); return c?(c.nombre||('perfil '+pid)):('perfil '+pid); }
+function tituloProd(pcId,uid){ const p=catalogoDe(pcId).find(x=>x.uid===uid); return p?p.titulo:uid; }
+function filasOrdenes(){
+  if(!STATE.orders.length) return `<tr><td colspan="6" class="vacio">no hay órdenes</td></tr>`;
+  return STATE.orders.map(o=>{
+    const est=o.estado||'pendiente';
+    const cls = est==='aplicada'?'ok':(est==='pendiente'?'warn':'');
+    return `<tr>
+      <td>${H(fhora(o.programada_en))}</td>
+      <td>${H(nombreCuentaPorPerfil(o.destino_pc,o.destino_profile_id))}<br><small style="color:var(--debil)">${H(o.destino_pc||'')}</small></td>
+      <td>${H(tituloProd(o.destino_pc,o.producto_uid))}</td>
+      <td><span class="pill ${cls}">${H(est)}</span></td>
+      <td style="color:var(--debil)">${H(o.origen_nombre||o.origen_pc||'')}</td>
+      <td>${est==='pendiente'?`<button class="btn peligro mini" onclick="cancelarOrden('${H(o.orden_uid)}')">Cancelar</button>`:''}</td>
+    </tr>`;
+  }).join('');
+}
+function prepProgramar(){
+  const L=pcs(); const selPc=$('#pgPc'); if(!selPc) return;
+  if(!selPc.dataset.init){ selPc.innerHTML=L.map(p=>`<option value="${H(p.pc_id)}">${H(p.pc_nombre)}</option>`).join(''); selPc.dataset.init='1'; }
+  const pcId=selPc.value||(L[0]&&L[0].pc_id);
+  const cs=cuentasDe(pcId).filter(c=>c.activa!==false);
+  $('#pgCuenta').innerHTML = cs.length? cs.map(c=>`<option value="${H(c.profile_id)}">${H(c.nombre||('perfil '+c.profile_id))}</option>`).join('') : `<option value="">(sin cuentas)</option>`;
+  const cat=catalogoDe(pcId);
+  $('#pgProd').innerHTML = cat.length? cat.map(p=>`<option value="${H(p.uid)}">${H(p.titulo||p.uid)}${p.fotos?(' · '+p.fotos+' foto(s)'):' · sin fotos'}</option>`).join('') : `<option value="">(ese PC no ha subido catálogo)</option>`;
+}
+async function crearOrden(){
+  const st=$('#pgSt'); st.textContent='programando…'; st.style.color='var(--tenue)';
+  const pcId=$('#pgPc').value, pid=$('#pgCuenta').value, uid=$('#pgProd').value, f=$('#pgFecha').value;
+  if(!pcId||!pid||!uid||!f){ st.textContent='faltan datos'; st.style.color='var(--mal)'; return; }
+  const orden={ orden_uid:(crypto.randomUUID?crypto.randomUUID().replace(/-/g,''):(''+Date.now()+Math.random()).replace(/\D/g,'')),
+    origen_pc:'web', origen_nombre:'Web', destino_pc:pcId, destino_profile_id:pid,
+    producto_uid:uid, programada_en:new Date(f).toISOString(), max_intentos:2 };
+  try{ await api('/api/orders',{method:'POST',body:JSON.stringify(orden)});
+    st.textContent='✅ programada'; st.style.color='var(--ok)';
+    STATE.orders = (await api('/api/orders?all=1').catch(()=>({ordenes:STATE.orders}))).ordenes||STATE.orders;
+    $('#main').querySelector('table tbody').innerHTML=filasOrdenes();
+  }catch(e){ st.textContent='error: '+e.message; st.style.color='var(--mal)'; }
+}
+async function cancelarOrden(uid){
+  try{ await api('/api/orders?orden_uid='+encodeURIComponent(uid),{method:'DELETE'});
+    STATE.orders = (await api('/api/orders?all=1')).ordenes||[];
+    $('#main').querySelector('table tbody').innerHTML=filasOrdenes();
+  }catch(e){ alert('No se pudo cancelar: '+e.message); }
+}
+
+/* ---------- Configuración ---------- */
+const CFG=[
+ {k:'DRY_RUN',t:'bool',l:'Modo seguro (NO publica de verdad)'},
+ {k:'MODO_PUBLICACION',t:'sel',o:['clicking','cdp'],l:'Motor de publicación'},
+ {k:'VINTED_DEFAULT_DOMAIN',t:'text',l:'Dominio de Vinted'},
+ {k:'AVISOS_ACTIVOS',t:'bool',l:'Vigilar el correo (ventas/ofertas)'},
+ {k:'CENTINELA_ACTIVO',t:'bool',l:'Centinela de mensajes (plan de pago)'},
+ {k:'BOT_ROTACION_ACTIVO',t:'bool',l:'Bot de mensajes (plan free)'},
+ {k:'PANEL_AVISOS',t:'bool',l:'Mostrar avisos en el panel'},
+ {k:'STATS_ACTIVO',t:'bool',l:'Recoger estadísticas'},
+ {k:'TELEGRAM_ESCUCHAR',t:'bool',l:'Escuchar respuestas de Telegram'},
+ {k:'OFERTAS_AUTO_ACEPTAR',t:'bool',l:'Auto-aceptar ofertas al mínimo'},
+ {k:'OFERTAS_DRY_RUN',t:'bool',l:'Ofertas en modo seguro'},
+ {k:'CLOSE_PROFILE_AFTER_TASK',t:'bool',l:'Cerrar el perfil al terminar'},
+ {k:'KEEP_OPEN_ON_ATTENTION',t:'bool',l:'Dejar abierto si hace falta atención'},
+ {k:'COMPARTIDO_AUTO_IMPORTAR',t:'bool',l:'Auto-importar el catálogo (PC 24h)'},
+ {k:'TELEGRAM_CHAT_ID',t:'text',l:'Telegram · Chat ID'},
+ {k:'VIGILANTE_IMAP_HOST',t:'text',l:'Correo · servidor IMAP'},
+ {k:'VIGILANTE_IMAP_PUERTO',t:'num',l:'Correo · puerto'},
+ {k:'VIGILANTE_IMAP_USUARIO',t:'text',l:'Correo · usuario'},
+ {k:'VIGILANTE_IMAP_CARPETA',t:'text',l:'Correo · carpeta'},
+ {k:'WHATSAPP_PHONE_ID',t:'text',l:'WhatsApp · Phone ID'},
+ {k:'WHATSAPP_DESTINO',t:'text',l:'WhatsApp · destino'},
+ {k:'WHATSAPP_PLANTILLA',t:'text',l:'WhatsApp · plantilla'},
+ {k:'CALLMEBOT_PHONE',t:'text',l:'CallMeBot · teléfono'},
+ {k:'DOLPHIN_API_HOST',t:'text',l:'Dolphin · API host'},
+ {k:'DOLPHIN_API_PORT',t:'num',l:'Dolphin · API puerto'},
+ {k:'HEARTBEAT_URL',t:'text',l:'Heartbeat (healthchecks.io)'},
+ {k:'COMPARTIDO_INTERVALO',t:'num',l:'Catálogo: seg entre pasadas'},
+ {k:'CENTINELA_INTERVALO',t:'num',l:'Centinela: seg entre sondeos'},
+ {k:'BOT_INTERVALO',t:'num',l:'Bot: seg entre rondas'},
+ {k:'STATS_INTERVALO',t:'num',l:'Estadísticas: seg'},
+ {k:'SCHEDULER_TICK_SECONDS',t:'num',l:'Planificador: seg'},
+];
+const SEC=[
+ {k:'DOLPHIN_API_TOKEN',l:'Token de Dolphin (Remote API)'},
+ {k:'TELEGRAM_BOT_TOKEN',l:'Token del bot de Telegram'},
+ {k:'VIGILANTE_IMAP_PASSWORD',l:'Contraseña de aplicación del correo'},
+ {k:'WHATSAPP_TOKEN',l:'Token de WhatsApp (Meta)'},
+ {k:'CALLMEBOT_APIKEY',l:'Apikey de CallMeBot'},
+ {k:'GEMINI_API_KEY',l:'Clave de Gemini (estudio de imágenes)'},
+];
+function vConfig(){
+  const L=pcs();
+  const opts=L.map(p=>`<option value="${H(p.pc_id)}">${H(p.pc_nombre)}${p.online?' · en línea':''}</option>`).join('');
+  return `
+  <div class="selpc"><label style="color:var(--tenue)">Configurar:</label><select id="cfPc" onchange="prepConfig()">${opts||'<option>(sin PC)</option>'}</select>
+    <span class="cuenta">Se guarda en la web y ese PC lo aplica en segundos.</span></div>
+  <div class="grid" style="grid-template-columns:1fr">
+    <div class="tarjeta">
+      <div class="titulo-sec"><h2>⚙️ Comportamiento</h2></div>
+      <div class="cols" id="cfCampos"></div>
+      <div style="display:flex;gap:10px;align-items:center;margin-top:14px"><button class="btn" onclick="guardarConfig()">Guardar configuración</button><span class="st" id="cfSt"></span></div>
+    </div>
+    <div class="tarjeta">
+      <div class="titulo-sec"><h2>🔒 Secretos</h2><span class="cuenta">se guardan en la web y bajan a ese PC · vacío = no cambiar</span></div>
+      <div class="cols" id="cfSecretos"></div>
+      <div style="display:flex;gap:10px;align-items:center;margin-top:14px"><button class="btn" onclick="guardarSecretos()">Guardar secretos</button><span class="st" id="secSt"></span></div>
+    </div>
+  </div>`;
+}
+function settingsDe(pcId){ const c=STATE.config.find(e=>e.pc_id===pcId); if(!c||!c.data) return {}; return c.data.settings||c.data||{}; }
+function secretosDe(pcId){ const s=STATE.secretos.find(e=>e.pc_id===pcId); return s&&s.data?s.data:{}; }
+function prepConfig(){
+  const sel=$('#cfPc'); if(!sel) return; const pcId=sel.value; const s=settingsDe(pcId);
+  $('#cfCampos').innerHTML = CFG.map(f=>{
+    const v=s[f.k];
+    if(f.t==='bool') return `<div class="chk"><input type="checkbox" id="cf_${f.k}" ${String(v).toLowerCase()==='true'?'checked':''}><label for="cf_${f.k}" style="margin:0;color:var(--txt)">${f.l}</label></div>`;
+    if(f.t==='sel') return `<div class="campo"><label>${f.l}</label><select id="cf_${f.k}">${f.o.map(o=>`<option ${String(v)===o?'selected':''}>${o}</option>`).join('')}</select></div>`;
+    return `<div class="campo"><label>${f.l}</label><input id="cf_${f.k}" type="${f.t==='num'?'number':'text'}" value="${H(v==null?'':v)}"></div>`;
+  }).join('');
+  const sec=secretosDe(pcId);
+  $('#cfSecretos').innerHTML = SEC.map(f=>`<div class="campo"><label>${f.l} ${sec[f.k]?'<span class="pill ok" style="padding:0 7px">configurado</span>':''}</label><input id="sec_${f.k}" type="password" autocomplete="off" placeholder="${sec[f.k]?'•••• guardado — vacío = no cambiar':'sin poner'}"></div>`).join('');
+}
+async function guardarConfig(){
+  const st=$('#cfSt'); st.textContent='guardando…'; st.style.color='var(--tenue)';
+  const pcId=$('#cfPc').value; const settings={};
+  CFG.forEach(f=>{ const el=$('#cf_'+f.k); if(!el) return; settings[f.k]= f.t==='bool'?(el.checked?'true':'false'):String(el.value); });
+  try{ await api('/api/config',{method:'POST',body:JSON.stringify({pc_id:pcId,settings,ts:new Date().toISOString(),origen:'web'})});
+    st.textContent='✅ guardado (ese PC lo aplicará en segundos)'; st.style.color='var(--ok)';
+    STATE.config=(await api('/api/config')).pcs||STATE.config;
+  }catch(e){ st.textContent='error: '+e.message; st.style.color='var(--mal)'; }
+}
+async function guardarSecretos(){
+  const st=$('#secSt'); st.textContent='guardando…'; st.style.color='var(--tenue)';
+  const pcId=$('#cfPc').value; const data={}; let n=0;
+  SEC.forEach(f=>{ const el=$('#sec_'+f.k); if(el&&el.value.trim()){ data[f.k]=el.value; n++; } });
+  if(!n){ st.textContent='no escribiste ninguno'; st.style.color='var(--warn)'; return; }
+  try{ await api('/api/store',{method:'POST',body:JSON.stringify({tipo:'secretos',pc_id:pcId,data,merge:true})});
+    st.textContent='✅ '+n+' secreto(s) guardado(s)'; st.style.color='var(--ok)';
+    SEC.forEach(f=>{ const el=$('#sec_'+f.k); if(el) el.value=''; });
+    STATE.secretos=(await api('/api/store?tipo=secretos')).items||STATE.secretos;
+    prepConfig();
+  }catch(e){ st.textContent='error: '+e.message; st.style.color='var(--mal)'; }
+}
+
+/* ---------- Actividad / Stats / Mensajes ---------- */
+function vActividad(){
+  const lineas=[];
+  STATE.estado.forEach(p=>{ const u=(p.data&&p.data.ultimas)||[]; const nom=(p.data&&p.data.pc_nombre)||p.pc_id;
+    u.forEach(l=>lineas.push({pc:nom,ts:l.ts,nivel:l.nivel,txt:l.mensaje})); });
+  lineas.sort((a,b)=>String(b.ts).localeCompare(String(a.ts)));
+  if(!lineas.length) return `<div class="tarjeta vacio">Sin actividad reciente.</div>`;
+  return `<div class="tarjeta log">`+lineas.slice(0,120).map(l=>`<div class="ln"><span class="t">${H(fhora(l.ts))}</span><span style="color:var(--acc)">${H(l.pc)}</span><span class="lv-${H(l.nivel)}">${H(l.txt)}</span></div>`).join('')+`</div>`;
+}
+function vStats(){
+  const bloques=STATE.stats.filter(s=>s.data);
+  if(!bloques.length) return `<div class="tarjeta vacio">Aún no hay estadísticas subidas.</div>`;
+  return bloques.map(s=>{
+    const nom=(pcs().find(p=>p.pc_id===s.pc_id)||{}).pc_nombre||s.pc_id;
+    const items=(s.data&&(s.data.items||s.data.articulos))||null;
+    let cuerpo;
+    if(Array.isArray(items)&&items.length){
+      cuerpo=`<div class="scroll"><table><thead><tr><th>Artículo</th><th>Clicks</th><th>Likes</th><th>Ofertas</th></tr></thead><tbody>`+
+        items.slice(0,60).map(it=>`<tr><td>${H(it.titulo||it.nombre||it.login||'')}</td><td class="num">${H(it.clicks!=null?it.clicks:'')}</td><td class="num">${H(it.likes!=null?it.likes:'')}</td><td class="num">${H(it.ofertas!=null?it.ofertas:'')}</td></tr>`).join('')+`</tbody></table></div>`;
+    } else { cuerpo=`<pre style="white-space:pre-wrap;color:var(--tenue);font-size:12px;max-height:340px;overflow:auto">${H(JSON.stringify(s.data,null,2))}</pre>`; }
+    return `<div class="tarjeta" style="margin-bottom:14px"><div class="titulo-sec"><h2>${H(nom)}</h2></div>${cuerpo}</div>`;
+  }).join('');
+}
+function vMensajes(){
+  const bloques=STATE.inbox.filter(s=>Array.isArray(s.data)&&s.data.length);
+  if(!bloques.length) return `<div class="tarjeta vacio">Sin mensajes/avisos.</div>`;
+  return bloques.map(s=>{
+    const nom=(pcs().find(p=>p.pc_id===s.pc_id)||{}).pc_nombre||s.pc_id;
+    const filas=s.data.slice(0,60).map(a=>`<tr><td>${H(fhora(a.ts||a.fecha||a.creado_en))}</td><td>${H(a.tipo||a.evento||'')}</td><td>${H(a.titulo||a.asunto||a.de||'')}</td><td>${H(a.texto||a.mensaje||a.resumen||'')}</td></tr>`).join('');
+    return `<div class="tarjeta" style="margin-bottom:14px"><div class="titulo-sec"><h2>${H(nom)}</h2><span class="cuenta">${s.data.length}</span></div><div class="scroll"><table><thead><tr><th>Cuándo</th><th>Tipo</th><th>De</th><th>Mensaje</th></tr></thead><tbody>${filas}</tbody></table></div></div>`;
+  }).join('');
+}
+
+/* ---------- fechas ---------- */
+function fhora(ts){ if(!ts) return '—'; const d=new Date(ts); if(isNaN(d)) return String(ts); return d.toLocaleString('es-ES',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}); }
+function hace(ts){ const s=edadSeg(ts); if(s<60) return 'hace '+Math.round(s)+'s'; if(s<3600) return 'hace '+Math.round(s/60)+'m'; if(s<86400) return 'hace '+Math.round(s/3600)+'h'; return fhora(ts); }
+
+/* ---------- arranque + refresco ---------- */
+async function arrancar(){
+  $('#login').classList.add('oculto'); $('#app').classList.remove('oculto');
+  try{ await cargar(); }catch(e){}
+  render();
+}
+async function refrescar(){
+  if(!TOKEN||$('#app').classList.contains('oculto')) return;
+  try{ await cargar(); if(TAB!=='config'&&TAB!=='programar') render(); else { pintarMini(); } }catch(e){}
+}
+setInterval(refrescar, 12000);
+if(TOKEN) arrancar();
+</script>
 </body>
 </html>
