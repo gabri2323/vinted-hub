@@ -40,6 +40,15 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: true, pcs });
     }
 
+    if (req.method === 'DELETE') {
+      const pc_id = String(
+        (req.query && req.query.pc_id) || (req.body && req.body.pc_id) || ''
+      ).trim();
+      if (!pc_id) return res.status(400).json({ ok: false, error: 'falta pc_id' });
+      await sql`DELETE FROM estaciones WHERE pc_id = ${pc_id}`;
+      return res.status(200).json({ ok: true, borrado: pc_id });
+    }
+
     res.status(405).json({ ok: false, error: 'metodo no permitido' });
   } catch (e) {
     fail(res, e);
