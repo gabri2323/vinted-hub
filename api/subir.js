@@ -8,19 +8,33 @@
 //   Cara del PC (con la cabecera x-hub-token del hub):
 //     GET    /api/subir?cola=1             -> subidas pendientes (para procesarlas)
 //     DELETE /api/subir?id=N               -> borrar una ya procesada
-//     POST   /api/subir?perfiles=1  {data} -> el PC publica la lista de perfiles
+//     POST   /api/subir?perfiles=1  {data:{perfiles, token}} -> el PC publica perfiles + token
 //
-// El TOKEN MOVIL (env MOVIL_TOKEN en Vercel) NO es el del hub: solo abre la puerta
-// de subir, nunca da acceso al resto del hub.
+// El TOKEN MOVIL lo PUBLICA el PC en la BD (data.token de movil_perfiles), asi el
+// usuario NO tiene que tocar variables en Vercel. Como respaldo tambien vale el env
+// MOVIL_TOKEN si estuviera puesto. Ese token solo abre la puerta de subir, nunca da
+// acceso al resto del hub.
 import { sql, ensureSchema } from '../lib/db.js';
 import { checkToken, fail } from '../lib/auth.js';
 
-function okMovil(req) {
-  const esperado = process.env.MOVIL_TOKEN || '';
+function parse(d) { try { return typeof d === 'object' ? d : JSON.parse(d || 'null'); } catch { return null; } }
+
+async function filaPerfiles() {
+  const rows = await sql`SELECT data FROM movil_perfiles WHERE pc_id='GLOBAL'`;
+  return rows.length ? parse(rows[0].data) : null;
+}
+function perfilesDe(raw) { return Array.isArray(raw) ? raw : ((raw && raw.perfiles) || []); }
+
+async function okMovil(req) {
+  let esperado = '';
+  try {
+    const raw = await filaPerfiles();
+    if (raw && !Array.isArray(raw) && raw.token) esperado = String(raw.token);
+  } catch { /* usa el env de respaldo */ }
+  if (!esperado) esperado = process.env.MOVIL_TOKEN || '';
   const recibido = String((req.query && req.query.t) || (req.body && req.body.t) || '');
   return !!esperado && recibido === esperado;
 }
-function parse(d) { try { return typeof d === 'object' ? d : JSON.parse(d || 'null'); } catch { return null; } }
 
 export default async function handler(req, res) {
   try {
@@ -36,23 +50,22 @@ export default async function handler(req, res) {
         return res.status(200).json({ ok: true, items: rows.map((r) => ({ id: String(r.id), data: parse(r.data), creado_en: r.creado_en })) });
       }
       if (esPerfiles) {                               // amigo: lista de perfiles
-        if (!okMovil(req)) return res.status(401).json({ ok: false, error: 'token no válido' });
-        const rows = await sql`SELECT data FROM movil_perfiles WHERE pc_id='GLOBAL'`;
-        return res.status(200).json({ ok: true, perfiles: rows.length ? (parse(rows[0].data) || []) : [] });
+        if (!(await okMovil(req))) return res.status(401).json({ ok: false, error: 'token no válido' });
+        return res.status(200).json({ ok: true, perfiles: perfilesDe(await filaPerfiles()) });
       }
       return res.status(400).json({ ok: false, error: 'falta cola o perfiles' });
     }
 
     if (req.method === 'POST') {
-      if (esPerfiles) {                               // PC: publica la lista de perfiles
+      if (esPerfiles) {                               // PC: publica perfiles + token
         if (!checkToken(req, res)) return;
-        const data = JSON.stringify((req.body && req.body.data) || []);
+        const data = JSON.stringify((req.body && req.body.data) || {});
         await sql`INSERT INTO movil_perfiles (pc_id,data,updated_at) VALUES ('GLOBAL',${data},now())
                   ON CONFLICT (pc_id) DO UPDATE SET data=EXCLUDED.data, updated_at=now()`;
         return res.status(200).json({ ok: true });
       }
       // amigo: nueva subida a la cola
-      if (!okMovil(req)) return res.status(401).json({ ok: false, error: 'token no válido' });
+      if (!(await okMovil(req))) return res.status(401).json({ ok: false, error: 'token no válido' });
       const b = req.body || {};
       const fotos = Array.isArray(b.fotos) ? b.fotos : (b.foto ? [{ b64: b.foto, mime: b.foto_mime || 'image/jpeg' }] : []);
       if (!fotos.length) return res.status(400).json({ ok: false, error: 'falta la foto' });
