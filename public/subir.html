@@ -42,6 +42,12 @@
     <label>¿Qué es? (opcional, ayuda a la IA)</label>
     <input id="pista" placeholder="p. ej. libro El Hobbit, talla M…">
 
+    <label>Precio (€) <span style="color:var(--tenue);font-weight:400">— opcional; si no, lo estima la IA</span></label>
+    <input id="precio" inputmode="decimal" placeholder="p. ej. 12">
+
+    <label>ISBN <span style="color:var(--tenue);font-weight:400">— solo si es un libro (así clava título y autor)</span></label>
+    <input id="isbn" inputmode="numeric" placeholder="978…">
+
     <label>¿A qué cuentas?</label>
     <div class="perfiles" id="perfiles"><div class="sub">cargando…</div></div>
 
@@ -112,7 +118,7 @@ $('enviar').addEventListener('click', function(){
   var b=this; b.disabled=true; est('Enviando…','tra');
   fetch('/api/subir', { method:'POST', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({ t:T, fotos:fotos.map(function(f){return {b64:f.b64,mime:f.mime};}),
-      objetivos:objs, de_quien:$('dequien').value, pista:$('pista').value })
+      objetivos:objs, de_quien:$('dequien').value, pista:$('pista').value, precio:$('precio').value, isbn:$('isbn').value })
   }).then(function(r){return r.json();}).then(function(res){
     if(res.ok){ $('paso').classList.add('oculto'); $('hecho').classList.remove('oculto'); }
     else est(res.error||'No se pudo enviar.','err');

@@ -74,6 +74,8 @@ export default async function handler(req, res) {
         objetivos: Array.isArray(b.objetivos) ? b.objetivos.slice(0, 10) : [],
         de_quien: String(b.de_quien || '').slice(0, 60),
         pista: String(b.pista || '').slice(0, 200),
+        precio: String(b.precio || '').slice(0, 20),
+        isbn: String(b.isbn || '').slice(0, 20),
       });
       await sql`INSERT INTO movil_cola (data) VALUES (${data})`;
       return res.status(200).json({ ok: true });
