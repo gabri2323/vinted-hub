@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="es"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Subir a Vinted</title>
+<style>
+  :root{ --fondo:#1A0B10; --panel:#26131C; --panel2:#301926; --borde:#472833; --texto:#F2E7EA;
+    --suave:#C9AAB1; --tenue:#916C76; --acento:#A32E47; --oro:#C6A24C; --ok:#46C98A; --error:#EF6A45; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; background:var(--fondo); color:var(--texto); font:16px/1.5 -apple-system,Segoe UI,Roboto,sans-serif;
+    padding:16px; max-width:560px; margin:0 auto; }
+  h1{ font-size:22px; margin:6px 0 2px; display:flex; align-items:center; gap:8px; }
+  h1 .a{ color:var(--oro); } .sub{ color:var(--tenue); font-size:13px; margin-bottom:16px; }
+  .card{ background:var(--panel); border:1px solid var(--borde); border-radius:14px; padding:14px; margin-bottom:14px; }
+  label{ display:block; font-size:12px; color:var(--suave); margin:10px 0 4px; }
+  input,textarea{ width:100%; background:#180B11; color:var(--texto); border:1px solid var(--borde);
+    border-radius:10px; padding:11px 12px; font-size:16px; }
+  .btn{ width:100%; border:none; border-radius:12px; padding:14px; font-size:17px; font-weight:700; cursor:pointer;
+    background:var(--acento); color:#fff; }
+  .btn:disabled{ opacity:.55; }
+  .drop{ border:2px dashed var(--borde); border-radius:14px; padding:26px 14px; text-align:center; color:var(--suave); }
+  .fotos{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+  .fotos img{ width:70px; height:70px; object-fit:cover; border-radius:8px; border:1px solid var(--borde); }
+  .estado{ font-size:14px; margin-top:10px; min-height:20px; }
+  .estado.err{ color:var(--error); } .estado.ok{ color:var(--ok); } .estado.tra{ color:var(--oro); }
+  .perfiles label.chk{ display:flex; align-items:center; gap:10px; background:#180B11; border:1px solid var(--borde);
+    border-radius:10px; padding:11px 12px; margin:6px 0; font-size:15px; }
+  .perfiles input{ width:20px; height:20px; flex:0 0 auto; }
+  .pc{ color:var(--tenue); font-size:12px; margin-left:auto; }
+  .oculto{ display:none; }
+  .hecho{ text-align:center; padding:24px 12px; } .hecho .big{ font-size:44px; }
+</style></head>
+<body>
+  <h1><span class="a">☀</span> Subir a Vinted</h1>
+  <div class="sub">Haz una foto (o elígela de la galería). Se la manda a Gabriel: él la revisa y la publica.</div>
+
+  <div id="paso" class="card">
+    <div class="drop" id="drop">📷 Toca para elegir de la galería o hacer una foto<br><small>(puedes añadir varias)</small></div>
+    <input id="file" type="file" accept="image/*" multiple class="oculto">
+    <div class="fotos" id="tira"></div>
+
+    <label>¿Qué es? (opcional, ayuda a la IA)</label>
+    <input id="pista" placeholder="p. ej. libro El Hobbit, talla M…">
+
+    <label>¿A qué cuentas?</label>
+    <div class="perfiles" id="perfiles"><div class="sub">cargando…</div></div>
+
+    <label>Tu nombre (para que Gabriel sepa quién lo envía)</label>
+    <input id="dequien" placeholder="opcional">
+
+    <div class="estado" id="est"></div>
+    <button class="btn" id="enviar" disabled style="margin-top:12px">Enviar a Gabriel</button>
+  </div>
+
+  <div id="hecho" class="card hecho oculto">
+    <div class="big">✅</div>
+    <p><b>¡Enviado!</b><br>Gabriel lo revisará y lo publicará.</p>
+    <button class="btn" id="otro">Subir otra cosa</button>
+  </div>
+
+<script>
+var T = new URLSearchParams(location.search).get('t') || '';
+var fotos = [];   // {b64, mime, url}
+var $ = function(id){ return document.getElementById(id); };
+function est(t,c){ $('est').textContent=t||''; $('est').className='estado'+(c?' '+c:''); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+
+$('drop').addEventListener('click', function(){ $('file').click(); });
+$('file').addEventListener('change', function(){ agregar(this.files); this.value=''; });
+
+function agregar(files){
+  var arr = Array.prototype.slice.call(files||[]);
+  arr.forEach(function(f){
+    if(!f || !/^image\//.test(f.type||'')) return;
+    reescalar(f, function(b64){
+      fotos.push({ b64:b64, mime:'image/jpeg', url:'data:image/jpeg;base64,'+b64 });
+      pintar();
+    });
+  });
+}
+function reescalar(file, cb){
+  var img = new Image();
+  img.onload = function(){
+    var max=1280, w=img.width, h=img.height;
+    if(w>max){ h=Math.round(h*max/w); w=max; }
+    var c=document.createElement('canvas'); c.width=w; c.height=h;
+    c.getContext('2d').drawImage(img,0,0,w,h);
+    var d=c.toDataURL('image/jpeg',0.8);
+    cb(d.split(',')[1]);
+  };
+  img.onerror=function(){ est('Esa imagen no se pudo leer.','err'); };
+  img.src = URL.createObjectURL(file);
+}
+function pintar(){
+  $('tira').innerHTML = fotos.map(function(f,i){ return '<img src="'+f.url+'" data-i="'+i+'">'; }).join('');
+  $('enviar').disabled = !fotos.length;
+}
+
+// perfiles
+fetch('/api/subir?perfiles=1&t='+encodeURIComponent(T)).then(function(r){return r.json();}).then(function(d){
+  if(!d.ok){ $('perfiles').innerHTML='<div class="sub">enlace no válido</div>'; return; }
+  var ps = d.perfiles||[];
+  $('perfiles').innerHTML = ps.length ? ps.map(function(p){
+    var pc = p.pc ? '<span class="pc">'+esc(p.pc)+'</span>' : '<span class="pc">este PC</span>';
+    return '<label class="chk"><input type="checkbox" value="'+esc(p.valor)+'"> '+esc(p.nombre)+pc+'</label>';
+  }).join('') : '<div class="sub">Aún no hay perfiles (enciende el PC un momento). Puedes enviar igual y elegirlos Gabriel.</div>';
+}).catch(function(){ $('perfiles').innerHTML='<div class="sub">sin conexión</div>'; });
+
+$('enviar').addEventListener('click', function(){
+  if(!fotos.length){ est('Añade una foto.','err'); return; }
+  var objs = Array.prototype.map.call(document.querySelectorAll('#perfiles input:checked'), function(i){return i.value;});
+  var b=this; b.disabled=true; est('Enviando…','tra');
+  fetch('/api/subir', { method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ t:T, fotos:fotos.map(function(f){return {b64:f.b64,mime:f.mime};}),
+      objetivos:objs, de_quien:$('dequien').value, pista:$('pista').value })
+  }).then(function(r){return r.json();}).then(function(res){
+    if(res.ok){ $('paso').classList.add('oculto'); $('hecho').classList.remove('oculto'); }
+    else est(res.error||'No se pudo enviar.','err');
+  }).catch(function(){ est('Sin conexión. Reintenta.','err'); })
+    .finally(function(){ b.disabled=false; });
+});
+$('otro').addEventListener('click', function(){ location.reload(); });
+</script>
+</body></html>

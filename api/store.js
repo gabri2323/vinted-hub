@@ -4,7 +4,7 @@
 //   GET  /api/store?tipo=estado&pc_id=X                 -> el blob de un PC
 //   DELETE /api/store?tipo=estado&pc_id=X               -> olvida un PC
 //
-// tipo ∈ {estado, catalogo, stats, inbox, secretos}. Cada tipo es una tabla con
+// tipo ∈ {estado, catalogo, stats, inbox, secretos, sociales, mensajes}. Cada tipo es una tabla con
 // la misma forma (pc_id PK, data text, updated_at). Se despacha con plantillas
 // explicitas por tabla porque el driver de Neon no interpola identificadores.
 import { sql, ensureSchema } from '../lib/db.js';
@@ -40,6 +40,18 @@ const T = {
     one: (id) => sql`SELECT pc_id,data,updated_at FROM secretos WHERE pc_id=${id}`,
     all: () => sql`SELECT pc_id,data,updated_at FROM secretos ORDER BY updated_at DESC`,
     del: (id) => sql`DELETE FROM secretos WHERE pc_id=${id}`,
+  },
+  sociales: {
+    up: (id, d) => sql`INSERT INTO sociales (pc_id,data,updated_at) VALUES (${id},${d},now()) ON CONFLICT (pc_id) DO UPDATE SET data=EXCLUDED.data, updated_at=now()`,
+    one: (id) => sql`SELECT pc_id,data,updated_at FROM sociales WHERE pc_id=${id}`,
+    all: () => sql`SELECT pc_id,data,updated_at FROM sociales ORDER BY updated_at DESC`,
+    del: (id) => sql`DELETE FROM sociales WHERE pc_id=${id}`,
+  },
+  mensajes: {
+    up: (id, d) => sql`INSERT INTO mensajes (pc_id,data,updated_at) VALUES (${id},${d},now()) ON CONFLICT (pc_id) DO UPDATE SET data=EXCLUDED.data, updated_at=now()`,
+    one: (id) => sql`SELECT pc_id,data,updated_at FROM mensajes WHERE pc_id=${id}`,
+    all: () => sql`SELECT pc_id,data,updated_at FROM mensajes ORDER BY updated_at DESC`,
+    del: (id) => sql`DELETE FROM mensajes WHERE pc_id=${id}`,
   },
 };
 
