@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#14171A">
+<title>Reto casa</title>
+<!--
+  RETO CASA EN EL MÓVIL, SOLO PARA MIRAR (2026-11-22). Pinta los números que el PC calcula y sube a /api/reto (los
+  mismos que la pestaña Reto casa del panel). Sin el token del enlace (?t=…) no se ve nada. Nada de aquí escribe.
+-->
+<style>
+  :root{
+    --fondo:#14171A; --panel:#1D2125; --panel2:#252A2F; --borde:#323940; --texto:#EEF1F3; --suave:#B4BDC4; --tenue:#7D8790;
+    --azul:#5B8DEF; --verde:#3FCF8E; --rojo:#E5484D; --amarillo:#E8B13A; --gris:#6B747C; --acento:#34A18E;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    color-scheme: dark;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; background:var(--fondo); color:var(--texto); }
+  body{ font:15px/1.45 -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-text-size-adjust:100%;
+    padding-block:max(14px, env(safe-area-inset-top, 0px)) max(28px, env(safe-area-inset-bottom, 0px));
+    padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px)); }
+  main{ max-width:560px; margin:0 auto; display:flex; flex-direction:column; gap:14px; }
+  header{ display:flex; align-items:baseline; justify-content:space-between; gap:10px; }
+  h1{ font-size:20px; margin:0; }
+  .chip{ font-size:12px; color:var(--tenue); border:1px solid var(--borde); border-radius:999px; padding:2px 9px; white-space:nowrap; }
+  section{ background:var(--panel); border:1px solid var(--borde); border-radius:16px; padding:14px; }
+  h2{ font-size:13px; font-weight:600; color:var(--suave); margin:0 0 10px; text-transform:uppercase; letter-spacing:.04em; }
+  .pct{ font-size:44px; font-weight:700; line-height:1; font-variant-numeric:tabular-nums; }
+  .pct small{ font-size:15px; color:var(--tenue); font-weight:500; }
+  .barra{ position:relative; height:16px; border-radius:999px; background:var(--panel2); overflow:visible; margin:16px 0 26px; display:flex; }
+  .barra > i{ display:block; height:100%; }
+  .barra > i:first-child{ border-radius:999px 0 0 999px; }
+  .b-azul{ background:var(--azul); } .b-verde{ background:var(--verde); } .b-rojo{ background:var(--rojo); }
+  .b-gris{ background:repeating-linear-gradient(135deg, var(--gris) 0 6px, #59616A 6px 12px); }
+  .marca{ position:absolute; top:-4px; bottom:-4px; width:2px; border-radius:2px; transform:translateX(-1px); }
+  .marca span{ position:absolute; top:22px; left:50%; transform:translateX(-50%); font-size:10px; color:var(--tenue); white-space:nowrap; }
+  .tres{ display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; }
+  .dato{ background:var(--panel2); border-radius:12px; padding:9px 10px; min-width:0; }
+  .dato .lab{ display:block; font-size:11px; color:var(--tenue); text-transform:uppercase; letter-spacing:.04em; }
+  .dato b{ font-size:18px; font-variant-numeric:tabular-nums; }
+  .leyenda{ display:flex; flex-wrap:wrap; gap:6px 12px; font-size:12px; color:var(--suave); margin-top:10px; }
+  .leyenda i{ display:inline-block; width:9px; height:9px; border-radius:3px; margin-right:5px; vertical-align:middle; }
+  .tramos{ display:flex; flex-wrap:wrap; gap:6px; margin-top:12px; }
+  .tramo{ font-size:12px; border-radius:999px; padding:3px 9px; border:1px solid var(--borde); }
+  .verde{ color:var(--verde); border-color:color-mix(in srgb, var(--verde) 45%, transparent); }
+  .amarillo{ color:var(--amarillo); border-color:color-mix(in srgb, var(--amarillo) 45%, transparent); }
+  .rojo{ color:var(--rojo); border-color:color-mix(in srgb, var(--rojo) 45%, transparent); }
+  .nota{ font-size:12px; color:var(--tenue); margin:10px 0 0; }
+  .filas{ display:flex; flex-direction:column; }
+  .fila{ display:flex; justify-content:space-between; align-items:baseline; gap:10px; padding:8px 0; border-top:1px solid var(--borde); }
+  .fila:first-child{ border-top:0; }
+  .fila span{ color:var(--suave); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .fila b{ font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .fila small{ color:var(--tenue); font-weight:400; }
+  .gato{ padding:10px 0; border-top:1px solid var(--borde); }
+  .gato:first-child{ border-top:0; }
+  .gato .cab{ display:flex; justify-content:space-between; gap:10px; }
+  .vida{ height:8px; border-radius:999px; background:var(--panel2); margin-top:7px; overflow:hidden; }
+  .vida i{ display:block; height:100%; background:var(--rojo); border-radius:999px; }
+  .vencido .vida i{ background:var(--verde); }
+  .dias{ display:grid; grid-template-columns:repeat(auto-fill, minmax(92px, 1fr)); gap:6px; }
+  .dia{ background:var(--panel2); border-radius:10px; padding:7px 8px; font-size:12px; color:var(--suave); }
+  .dia b{ display:block; font-size:14px; color:var(--texto); font-variant-numeric:tabular-nums; }
+  .dia.hoy{ outline:1px solid var(--acento); }
+  .estado{ text-align:center; font-size:13px; color:var(--tenue); margin:0; }
+  .estado.viejo, .error{ color:var(--amarillo); }
+  button{ font:inherit; color:var(--texto); background:var(--panel2); border:1px solid var(--borde); border-radius:999px; padding:8px 16px; }
+  .vacio{ color:var(--tenue); font-size:13px; }
+  [hidden]{ display:none !important; }
+</style>
+</head>
+<body>
+<main>
+  <header><h1>🏠 Reto casa</h1><span class="chip" id="mes">…</span></header>
+
+  <section aria-labelledby="t-barra">
+    <h2 id="t-barra">Este mes · meta 500 €</h2>
+    <div class="pct" id="pct">—<small></small></div>
+    <div class="barra" id="barra" role="img" aria-label="Progreso del mes">
+      <i class="b-azul" id="b-azul"></i><i class="b-verde" id="b-verde"></i><i class="b-rojo" id="b-rojo"></i><i class="b-gris" id="b-gris"></i>
+    </div>
+    <div class="tres">
+      <div class="dato"><span class="lab">Generado</span><b id="generado">—</b></div>
+      <div class="dato"><span class="lab">Pendiente</span><b id="pendiente">—</b></div>
+      <div class="dato"><span class="lab">Restante</span><b id="restante">—</b></div>
+    </div>
+    <div class="leyenda">
+      <span><i class="b-azul"></i>invertido <b id="l-inv"></b></span>
+      <span><i class="b-verde"></i>beneficio <b id="l-ben"></b></span>
+      <span><i class="b-rojo"></i>sueldo <b id="l-sue"></b></span>
+      <span><i class="b-gris"></i>pendiente</span>
+    </div>
+    <div class="tramos" id="tramos"></div>
+    <p class="nota" id="deudas-mes" hidden></p>
+    <p class="nota" id="gen-total"></p>
+  </section>
+
+  <section aria-labelledby="t-saldo">
+    <h2 id="t-saldo">💰 Saldo en Vinted</h2>
+    <div class="tres">
+      <div class="dato"><span class="lab">💸 Retirable</span><b id="s-disp">—</b></div>
+      <div class="dato"><span class="lab">⏳ Retenido</span><b id="s-ret">—</b></div>
+      <div class="dato"><span class="lab">Total</span><b id="s-tot">—</b></div>
+    </div>
+    <div class="filas" id="s-cuentas" style="margin-top:8px"></div>
+  </section>
+
+  <section aria-labelledby="t-deudas">
+    <h2 id="t-deudas">⚔️ Deudas</h2>
+    <div id="deudas"></div>
+  </section>
+
+  <section aria-labelledby="t-cuentas">
+    <h2 id="t-cuentas">🏷️ Generado por cuenta (este mes)</h2>
+    <div class="filas" id="cuentas"></div>
+  </section>
+
+  <section aria-labelledby="t-dias">
+    <h2 id="t-dias">Pendiente por día</h2>
+    <div class="dias" id="dias"></div>
+  </section>
+
+  <p class="estado" id="estado">Cargando…</p>
+  <p class="estado"><button type="button" id="recargar">Actualizar</button></p>
+</main>
+<script>
+  const MESES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  const MESES_L = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  const T = new URLSearchParams(location.search).get('t') || '';
+  const $ = id => document.getElementById(id);
+  const fmt = n => Number(n || 0).toLocaleString('es-ES', { maximumFractionDigits: 2 }) + ' €';
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+  const fila = (izq, der) => '<div class="fila"><span>' + izq + '</span><b>' + der + '</b></div>';
+
+  function hace(iso) {
+    const t = Date.parse(iso || '');
+    if (!t) return '';
+    const m = Math.round((Date.now() - t) / 60000);
+    if (m < 2) return 'hace un momento';
+    if (m < 120) return 'hace ' + m + ' min';
+    return 'hace ' + Math.round(m / 60) + ' h';
+  }
+
+  function pintar(d, cuando) {
+    const [an, me] = String(d.mes || '').split('-');
+    $('mes').textContent = me ? MESES_L[Number(me) - 1] + ' ' + an : '';
+    $('pct').innerHTML = esc(d.pct) + '<small> %</small>';
+    const b = d.barra || {};
+    $('b-azul').style.width = (b.invertido || 0) + '%';
+    $('b-verde').style.width = (b.beneficio || 0) + '%';
+    $('b-rojo').style.width = (b.sueldo || 0) + '%';
+    $('b-gris').style.width = (b.pendiente || 0) + '%';
+    const barra = $('barra');
+    barra.querySelectorAll('.marca').forEach(m => m.remove());
+    (d.tramos || []).forEach(t => {
+      const m = document.createElement('span');
+      m.className = 'marca';
+      m.style.left = Math.min(100, t.tope / (d.meta || 500) * 100) + '%';
+      m.style.background = t.estado === 'verde' ? 'var(--verde)' : t.estado === 'amarillo' ? 'var(--amarillo)' : 'var(--rojo)';
+      barra.appendChild(m);
+    });
+    $('barra').setAttribute('aria-label', 'Generado ' + fmt(d.generado) + ' y pendiente ' + fmt(d.pendiente) + ' de 500 €');
+    $('generado').textContent = fmt(d.generado);
+    $('pendiente').textContent = fmt(d.pendiente);
+    $('restante').textContent = fmt(d.restante);
+    const p = d.partes || {};
+    $('l-inv').textContent = fmt(p.invertido); $('l-ben').textContent = fmt(p.beneficio); $('l-sue').textContent = fmt(p.sueldo);
+    $('tramos').innerHTML = (d.tramos || []).map(t =>
+      '<span class="tramo ' + esc(t.estado) + '">' + esc(t.tope) + ' € · ' + esc(t.nombre) + '</span>').join('');
+    $('deudas-mes').hidden = !(d.a_deudas > 0.004);
+    $('deudas-mes').textContent = '⚔️ ' + fmt(d.a_deudas) + ' depositados a deudas este mes: salen de la barra, no del generado.';
+    $('gen-total').textContent = '📈 Generado en total: ' + fmt(d.generado_total);
+
+    const s = d.saldo || {};
+    $('s-disp').textContent = fmt(s.disponible); $('s-ret').textContent = fmt(s.retenido); $('s-tot').textContent = fmt(s.total);
+    const sc = (s.cuentas || []).slice().sort((a, b) => (b.disponible + b.retenido) - (a.disponible + a.retenido));
+    $('s-cuentas').innerHTML = sc.map(c => fila(esc(c.cuenta) + ' <small>' + esc(hace(c.leido_en)) + '</small>',
+      fmt(c.disponible) + ' <small>+ ' + fmt(c.retenido) + '</small>')).join('')
+      + ((s.faltan || []).length ? '<p class="nota">Sin leer aún: ' + esc(s.faltan.join(', ')) + '</p>' : '');
+
+    const ds = d.deudas || [];
+    $('deudas').innerHTML = !ds.length ? '<p class="vacio">No debes nada 🎉</p>'
+      : '<p class="nota" style="margin:0 0 6px">' + (d.deudas_vivas
+          ? '<b>' + d.deudas_vivas + '</b> ' + (d.deudas_vivas === 1 ? 'gato malvado suelto' : 'gatos malvados sueltos') + ' · <b>' + fmt(d.deudas_resta) + '</b> por pagar'
+          : 'Sin deudas: todos los gatos vencidos') + '</p>'
+        + ds.map(g => {
+          const vida = g.total > 0 ? Math.max(0, Math.min(100, g.resta / g.total * 100)) : 0;
+          return '<div class="gato' + (g.resta > 0.004 ? '' : ' vencido') + '"><div class="cab"><span>' + (g.resta > 0.004 ? '😼 ' : '😵 ')
+            + esc(g.nombre) + '</span><b>' + (g.resta > 0.004 ? fmt(g.resta) + ' <small>de ' + fmt(g.total) + '</small>' : 'pagada') + '</b></div>'
+            + '<div class="vida"><i style="width:' + vida + '%"></i></div></div>';
+        }).join('');
+
+    const cs = d.cuentas || [];
+    $('cuentas').innerHTML = cs.length ? cs.map(c => fila(esc(c.cuenta), fmt(c.importe))).join('')
+      : '<p class="vacio">Nada apuntado este mes todavía</p>';
+
+    const hoy = (d.pendiente_dias || [])[0];
+    $('dias').innerHTML = (d.pendiente_dias || []).map((x, i) => {
+      const [, m, dd] = String(x.dia).split('-');
+      return '<div class="dia' + (i === 0 && hoy ? ' hoy' : '') + '">' + Number(dd) + ' ' + MESES[Number(m) - 1]
+        + (i === 0 ? ' · hoy' : '') + '<b>' + fmt(x.importe) + '</b></div>';
+    }).join('');
+
+    const viejo = Date.now() - Date.parse(cuando || d.subido_en || '') > 30 * 60000;
+    $('estado').className = 'estado' + (viejo ? ' viejo' : '');
+    $('estado').textContent = 'Datos del panel ' + hace(cuando || d.subido_en)
+      + (viejo ? ' · el PC lleva rato sin subirlos (¿apagado?)' : '') + ' · solo para mirar';
+  }
+
+  async function cargar() {
+    if (!T) { $('estado').textContent = 'Falta la clave del enlace: ábrelo desde el QR del panel o desde /reto en Telegram.'; return; }
+    try {
+      const r = await fetch('/api/reto?t=' + encodeURIComponent(T), { cache: 'no-store' });
+      if (r.status === 404) throw new Error('enlace no válido o el PC aún no ha subido nada');
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const j = await r.json();
+      if (!j.ok || !j.data) throw new Error(j.error || 'sin datos');
+      pintar(j.data, j.updated_at);
+    } catch (e) {
+      $('estado').className = 'estado error';
+      $('estado').textContent = 'No pude leer el Reto (' + e.message + '). Pulsa Actualizar.';
+    }
+  }
+  $('recargar').addEventListener('click', cargar);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) cargar(); });
+  setInterval(cargar, 60000);
+  cargar();
+</script>
+</body>
+</html>
