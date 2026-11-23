@@ -74,8 +74,8 @@
   .dia.amarillo b{ color:var(--amarillo); }
   .dia.verde{ background:rgba(63,207,142,.16); box-shadow:inset 0 0 0 1px rgba(63,207,142,.55); }
   .dia.verde b{ color:var(--verde); }
-  .leyenda{ display:flex; flex-wrap:wrap; gap:4px 12px; font-size:12px; color:var(--tenue); margin:-4px 0 10px; }
-  .leyenda i{ display:inline-block; width:9px; height:9px; border-radius:3px; margin-right:5px; vertical-align:0; }
+  /* La leyenda de los días usa la de la barra (.leyenda, arriba) y solo cambia su sitio y su tono. */
+  .leyenda.leyenda-dias{ gap:4px 12px; color:var(--tenue); margin:-4px 0 10px; }
   .estado{ text-align:center; font-size:13px; color:var(--tenue); margin:0; }
   .estado.viejo, .error{ color:var(--amarillo); }
   button{ font:inherit; color:var(--texto); background:var(--panel2); border:1px solid var(--borde); border-radius:999px; padding:8px 16px; }
@@ -131,7 +131,7 @@
 
   <section aria-labelledby="t-dias">
     <h2 id="t-dias">Pendiente por día</h2>
-    <div class="leyenda">
+    <div class="leyenda leyenda-dias">
       <span><i style="background:var(--rojo)"></i>hasta 13 €</span>
       <span><i style="background:var(--amarillo)"></i>de 13 a 20 €</span>
       <span><i style="background:var(--verde)"></i>21 € o más</span>
