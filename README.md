@@ -35,6 +35,20 @@ Todas las rutas `/api/*` exigen la cabecera `x-hub-token` = variable `HUB_TOKEN`
 4. **Redeploy** (Deployments → Redeploy). Abre `https://TU-PROYECTO.vercel.app`
    y prueba el token: debe decir *token correcto y base de datos lista*.
 
+## Almacén de Vercel (desde 2026-11-23)
+
+Neon se quedó sin cupo gratis (HTTP 402) y el hub dejó de funcionar. Lo que sigue
+en uso (el **Reto en el móvil**, el buzón **«Subir a Vinted»** y `/api/health`)
+guarda ahora en **Upstash for Redis** creado desde Vercel (`lib/kv.js`, por su API
+REST, sin dependencias) a través de `lib/almacen.js`. Si el almacén no está
+conectado, esas rutas siguen con Neon como antes. Las rutas retiradas (órdenes,
+cuentas, config, apoyo, turno) siguen en Neon y nadie las llama.
+
+Para conectarlo: Vercel → proyecto → **Storage** → **Create Database** →
+**Upstash for Redis** (plan gratis) → conéctalo al proyecto. Pone solas
+`KV_REST_API_URL` y `KV_REST_API_TOKEN`. Luego **Redeploy**. `/api/health`
+responde `{"ok":true,"almacen":"kv"}` cuando ya lo usa.
+
 ## Variables de entorno (en Vercel)
 
 | Variable       | De dónde sale                          | Para qué                    |
